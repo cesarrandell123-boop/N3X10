@@ -10,23 +10,46 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig(() => {
   return {
+    base: './',
     plugins: [
       react(),
       tailwindcss(),
-      // Copies src/assets into dist/ so root-relative URLs like
-      // "/src/assets/images/..." still resolve in production builds.
+      // Copies static assets and game files into dist/ so relative URLs
+      // resolve both on static GitHub Pages and in Vite production builds.
       {
-        name: 'copy-unbundled-src-assets',
+        name: 'copy-static-arcade-assets',
         apply: 'build',
         closeBundle(error) {
           if (error) {
             return;
           }
           const distDir = path.resolve(__dirname, 'dist');
-          const srcAssets = path.resolve(__dirname, 'src/assets');
-          const distAssets = path.resolve(distDir, 'src/assets');
-          if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
-            fs.cpSync(srcAssets, distAssets, { recursive: true, force: true });
+          if (!fs.existsSync(distDir)) return;
+
+          const foldersToCopy = [
+            ['src/assets', 'src/assets'],
+            ['css', 'css'],
+            ['games', 'games'],
+          ];
+
+          for (const [fromRel, toRel] of foldersToCopy) {
+            const fromPath = path.resolve(__dirname, fromRel);
+            const toPath = path.resolve(distDir, toRel);
+            if (fs.existsSync(fromPath)) {
+              fs.cpSync(fromPath, toPath, { recursive: true, force: true });
+            }
+          }
+
+          const gamesJsonFrom = path.resolve(__dirname, 'games.json');
+          const gamesJsonTo = path.resolve(distDir, 'games.json');
+          if (fs.existsSync(gamesJsonFrom)) {
+            fs.copyFileSync(gamesJsonFrom, gamesJsonTo);
+          }
+
+          const nojekyllFrom = path.resolve(__dirname, '.nojekyll');
+          const nojekyllTo = path.resolve(distDir, '.nojekyll');
+          if (fs.existsSync(nojekyllFrom)) {
+            fs.copyFileSync(nojekyllFrom, nojekyllTo);
           }
         },
       },

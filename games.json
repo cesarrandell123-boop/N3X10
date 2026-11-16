@@ -9,16 +9,16 @@
       "players": "1 Player",
       "controls": "Space / Up Arrow",
       "description": "Sprint across dusk monoliths, time double-jumps over obstacles, and outlast rising speed.",
-      "thumbnail": "/src/assets/images/game_thumb_runner_1794865543735.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_runner_1794865543735.jpg",
       "featured": true,
       "iframe": {
-        "src": "/games/runner.html",
+        "src": "./games/runner.html",
         "title": "Neon Hopper Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/runner.html\" title=\"Neon Hopper Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/runner.html\" title=\"Neon Hopper Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     },
     {
@@ -28,16 +28,16 @@
       "players": "1 Player",
       "controls": "Arrow Keys / WASD",
       "description": "Guide the geometric serpent across the grid, collect amber orbs, and avoid trapping yourself.",
-      "thumbnail": "/src/assets/images/game_thumb_snake_1794865542064.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_snake_1794865542064.jpg",
       "featured": false,
       "iframe": {
-        "src": "/games/snake.html",
+        "src": "./games/snake.html",
         "title": "Snake Classic Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/snake.html\" title=\"Snake Classic Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/snake.html\" title=\"Snake Classic Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     },
     {
@@ -47,16 +47,16 @@
       "players": "1 Player",
       "controls": "Arrows / WASD / Swipe",
       "description": "Slide matching ceramic number tiles across the 4x4 tray to forge the elusive 2048 tile.",
-      "thumbnail": "/src/assets/images/game_thumb_2048_1794865542590.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_2048_1794865542590.jpg",
       "featured": false,
       "iframe": {
-        "src": "/games/2048.html",
+        "src": "./games/2048.html",
         "title": "2048 Tiles Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/2048.html\" title=\"2048 Tiles Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/2048.html\" title=\"2048 Tiles Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     },
     {
@@ -66,16 +66,16 @@
       "players": "1 Player",
       "controls": "Mouse / Left & Right",
       "description": "Deflect the energy sphere with your steel paddle to shatter multi-tier brick formations.",
-      "thumbnail": "/src/assets/images/game_thumb_breakout_1794865542852.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_breakout_1794865542852.jpg",
       "featured": false,
       "iframe": {
-        "src": "/games/breakout.html",
+        "src": "./games/breakout.html",
         "title": "Brick Breaker Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/breakout.html\" title=\"Brick Breaker Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/breakout.html\" title=\"Brick Breaker Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     },
     {
@@ -85,16 +85,16 @@
       "players": "1 Player",
       "controls": "Arrows / Space Drop",
       "description": "Rotate and drop interlocking tetromino pieces to clear horizontal lines before the well overflows.",
-      "thumbnail": "/src/assets/images/game_thumb_blocks_1794865544073.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_blocks_1794865544073.jpg",
       "featured": false,
       "iframe": {
-        "src": "/games/tetris.html",
+        "src": "./games/tetris.html",
         "title": "Block Stack Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/tetris.html\" title=\"Block Stack Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/tetris.html\" title=\"Block Stack Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     },
     {
@@ -104,16 +104,16 @@
       "players": "1 Player",
       "controls": "Click / Right-Click Flag",
       "description": "Deduce hidden mine coordinates from adjacent clue counts and flag every hazard on the board.",
-      "thumbnail": "/src/assets/images/game_thumb_minesweeper_1794865544702.jpg",
+      "thumbnail": "./src/assets/images/game_thumb_minesweeper_1794865544702.jpg",
       "featured": false,
       "iframe": {
-        "src": "/games/minesweeper.html",
+        "src": "./games/minesweeper.html",
         "title": "Minesweeper Game",
         "width": "100%",
         "height": "100%",
         "allow": "autoplay; fullscreen",
         "sandbox": "allow-scripts allow-same-origin",
-        "html": "<iframe src=\"/games/minesweeper.html\" title=\"Minesweeper Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
+        "html": "<iframe src=\"./games/minesweeper.html\" title=\"Minesweeper Game\" width=\"100%\" height=\"100%\" frameborder=\"0\" allowfullscreen loading=\"lazy\"></iframe>"
       }
     }
   ]

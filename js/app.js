@@ -400,7 +400,7 @@ function parseIframeSnippet(input) {
 
 function isSafeIframeUrl(url) {
   if (!url) return false;
-  if (url.startsWith('/')) return true;
+  if (url.startsWith('./') || url.startsWith('/')) return true;
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'https:' || parsed.protocol === 'http:';
@@ -672,7 +672,7 @@ function bindEvents() {
   });
 }
 
-async function init() {
+export async function initArcade() {
   state.favorites = loadLocalArray(STORAGE_KEYS.favorites);
   state.recent = loadLocalArray(STORAGE_KEYS.recent);
   state.customGames = loadLocalArray(STORAGE_KEYS.customGames);
@@ -680,7 +680,7 @@ async function init() {
   bindEvents();
 
   try {
-    const response = await fetch('/games.json');
+    const response = await fetch('./games.json');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     state.baseGames = Array.isArray(data.games) ? data.games : [];
@@ -693,5 +693,3 @@ async function init() {
   updateHero(getAllGames());
   renderCatalog();
 }
-
-init();
