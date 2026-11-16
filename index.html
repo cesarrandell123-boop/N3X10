@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pocket Arcade — Unblocked HTML5 Games</title>
+    <meta
+      name="description"
+      content="An unblocked HTML5 game catalog storing playable games as iframes in JSON."
+    />
+    <meta property="og:title" content="Pocket Arcade — Unblocked HTML5 Games" />
+    <meta
+      property="og:description"
+      content="An unblocked HTML5 game catalog storing playable games as iframes in JSON."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <a href="#catalog" class="brand-wordmark" id="brandHome">Pocket Arcade</a>
+
+        <nav class="main-nav" aria-label="Primary">
+          <button type="button" class="nav-link is-active" data-view="all">Catalog</button>
+          <button type="button" class="nav-link" data-view="favorites">Favorites</button>
+          <button type="button" class="nav-link" data-view="recent">Recent</button>
+          <button type="button" class="nav-link" id="openAddGameBtn">Add Game</button>
+        </nav>
+
+        <div class="header-actions">
+          <button type="button" class="btn-primary" id="randomGameBtn">Random Game</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="hero-section" id="heroSection" aria-label="Featured game">
+        <div class="hero-copy">
+          <p class="hero-kicker" id="heroKicker">Featured Selection</p>
+          <h1 class="hero-title" id="heroTitle">Unblocked Arcade, Ready in One Click</h1>
+          <p class="hero-subtitle" id="heroSubtitle">
+            Every title loads from games.json as a clean embedded iframe with instant keyboard play and zero sign-ups.
+          </p>
+          <div class="hero-cta-row">
+            <button type="button" class="btn-primary btn-lg" id="playFeaturedBtn">Play Featured</button>
+            <button type="button" class="btn-secondary btn-lg" id="inspectCatalogJsonBtn">View games.json</button>
+          </div>
+        </div>
+
+        <div class="hero-media-card" id="heroCard" role="button" tabindex="0" aria-label="Play featured game">
+          <div class="media-frame">
+            <img
+              id="heroImage"
+              src="/src/assets/images/game_thumb_runner_1794865543735.jpg"
+              alt="Featured game artwork"
+              referrerpolicy="no-referrer"
+            />
+            <div class="media-fallback" aria-hidden="true">
+              <span class="fallback-title">Pocket Arcade</span>
+            </div>
+            <div class="hero-media-scrim"></div>
+            <div class="hero-media-caption">
+              <span class="meta-line" id="heroMeta">Action · 1 Player · Space / Arrows</span>
+              <h2 class="hero-card-title" id="heroCardTitle">Neon Hopper</h2>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="catalog-section" id="catalog" aria-label="Game catalog">
+        <div class="toolbar">
+          <div class="filter-tabs" role="tablist" aria-label="Game categories" id="categoryTabs">
+            <button type="button" class="filter-tab is-active" data-category="All" role="tab" aria-selected="true">All</button>
+            <button type="button" class="filter-tab" data-category="Arcade" role="tab" aria-selected="false">Arcade</button>
+            <button type="button" class="filter-tab" data-category="Puzzle" role="tab" aria-selected="false">Puzzle</button>
+            <button type="button" class="filter-tab" data-category="Action" role="tab" aria-selected="false">Action</button>
+            <button type="button" class="filter-tab" data-category="Classic" role="tab" aria-selected="false">Classic</button>
+          </div>
+
+          <div class="toolbar-controls">
+            <div class="search-field">
+              <label for="searchInput" class="sr-only">Search games</label>
+              <input
+                type="search"
+                id="searchInput"
+                placeholder="Search games or controls..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="select-field">
+              <label for="sortSelect" class="sr-only">Sort games</label>
+              <select id="sortSelect">
+                <option value="featured">Featured First</option>
+                <option value="title-asc">Title A–Z</option>
+                <option value="recent">Recently Played</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="catalog-status-bar">
+          <p class="catalog-count" id="catalogCount">Loading games...</p>
+          <div class="catalog-tools">
+            <button type="button" class="text-action" id="exportJsonBtn">Download games.json</button>
+          </div>
+        </div>
+
+        <div class="games-grid" id="gamesGrid" aria-live="polite"></div>
+
+        <div class="empty-state" id="emptyState" hidden>
+          <h3 class="empty-title" id="emptyTitle">No matching games found</h3>
+          <p class="empty-copy" id="emptyCopy">Try clearing your search filter or adding a custom iframe game.</p>
+          <button type="button" class="btn-secondary" id="resetFiltersBtn">Reset Filters</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Game Player Stage Modal -->
+    <div class="stage-overlay" id="playerOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="stageTitle">
+      <div class="stage-shell" id="stageShell">
+        <div class="stage-topbar">
+          <div class="stage-title-group">
+            <button type="button" class="btn-ghost" id="closeStageBtn">Back to Catalog</button>
+            <div class="stage-heading">
+              <h2 class="stage-title" id="stageTitle">Game Title</h2>
+              <p class="stage-meta" id="stageMeta">Arcade · 1 Player · Arrow Keys</p>
+            </div>
+          </div>
+
+          <div class="stage-controls">
+            <button type="button" class="btn-ghost" id="stageFavoriteBtn">Favorite</button>
+            <button type="button" class="btn-ghost" id="stageJsonBtn">Iframe JSON</button>
+            <button type="button" class="btn-ghost" id="reloadFrameBtn">Reload</button>
+            <button type="button" class="btn-ghost" id="theaterModeBtn">Theater</button>
+            <button type="button" class="btn-primary" id="fullscreenBtn">Fullscreen</button>
+          </div>
+        </div>
+
+        <div class="stage-frame-wrap" id="stageFrameWrap">
+          <div class="iframe-container" id="iframeContainer"></div>
+        </div>
+
+        <div class="stage-json-drawer" id="stageJsonDrawer" hidden>
+          <div class="drawer-header">
+            <span class="drawer-title">Stored games.json Entry</span>
+            <button type="button" class="text-action" id="copyEntryJsonBtn">Copy JSON</button>
+          </div>
+          <pre class="json-code" id="stageJsonCode"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Custom Game Modal -->
+    <div class="modal-overlay" id="addGameOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h2 class="modal-title" id="addModalTitle">Add Iframe Game to Catalog</h2>
+          <button type="button" class="btn-ghost" id="closeAddModalBtn" aria-label="Close modal">Close</button>
+        </div>
+
+        <form id="addGameForm" class="modal-form">
+          <div class="form-row">
+            <label for="gameTitleInput">Game Title</label>
+            <input type="text" id="gameTitleInput" required maxlength="60" placeholder="e.g. Slope Tunnel" />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label for="gameCategoryInput">Category</label>
+              <select id="gameCategoryInput">
+                <option value="Arcade">Arcade</option>
+                <option value="Puzzle">Puzzle</option>
+                <option value="Action">Action</option>
+                <option value="Classic">Classic</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="gameControlsInput">Controls</label>
+              <input type="text" id="gameControlsInput" maxlength="40" placeholder="WASD / Mouse" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="gameIframeInput">Iframe URL or &lt;iframe&gt; HTML</label>
+            <textarea
+              id="gameIframeInput"
+              rows="3"
+              required
+              placeholder='https://example.com/game.html or <iframe src="https://example.com/game.html"></iframe>'
+            ></textarea>
+            <span class="field-hint">Stored locally alongside games.json and exportable via Download games.json.</span>
+          </div>
+
+          <div class="form-row">
+            <label for="gameDescInput">Short Description</label>
+            <input type="text" id="gameDescInput" maxlength="120" placeholder="One-sentence overview of the game." />
+          </div>
+
+          <p class="form-error" id="addGameError" hidden></p>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-ghost" id="cancelAddBtn">Cancel</button>
+            <button type="submit" class="btn-primary">Add to Catalog</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Raw games.json Inspector Modal -->
+    <div class="modal-overlay" id="jsonInspectorOverlay" hidden role="dialog" aria-modal="true" aria-labelledby="jsonModalTitle">
+      <div class="modal-panel modal-panel-wide">
+        <div class="modal-header">
+          <h2 class="modal-title" id="jsonModalTitle">games.json Catalog Source</h2>
+          <button type="button" class="btn-ghost" id="closeJsonModalBtn">Close</button>
+        </div>
+        <pre class="json-code json-code-tall" id="fullJsonPreview"></pre>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="copyFullJsonBtn">Copy Full JSON</button>
+          <button type="button" class="btn-primary" id="downloadFullJsonBtn">Download games.json</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <p class="footer-copy">Pocket Arcade · Games loaded from <span class="mono-inline">games.json</span></p>
+        <div class="footer-links">
+          <button type="button" class="text-action" id="footerViewJsonBtn">Inspect JSON</button>
+          <button type="button" class="text-action" id="footerResetCustomBtn">Clear Custom Games</button>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2048 Tiles</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f17;
+        color: #f3f5f9;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        gap: 14px;
+      }
+      .hud {
+        width: min(440px, 92vw);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-variant-numeric: tabular-nums;
+      }
+      .scores { display: flex; gap: 18px; font-size: 14px; color: #a1acbf; }
+      .scores strong { color: #f3f5f9; margin-left: 6px; font-size: 16px; }
+      .actions { display: flex; gap: 8px; }
+      button {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.14);
+        background: #131a27;
+        color: #f3f5f9;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #f59e0b;
+        color: #0b0f17;
+        border-color: #f59e0b;
+      }
+      .board {
+        position: relative;
+        width: min(440px, 76vh, 92vw);
+        aspect-ratio: 1 / 1;
+        padding: 12px;
+        border-radius: 14px;
+        background: #131a27;
+        border: 1px solid rgba(255,255,255,0.1);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+      }
+      .cell {
+        border-radius: 10px;
+        background: #1b2436;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: clamp(20px, 4vw, 30px);
+        font-variant-numeric: tabular-nums;
+        transition: transform 120ms ease, background-color 120ms ease;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        background: rgba(11, 15, 23, 0.84);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        text-align: center;
+        padding: 20px;
+      }
+      .overlay[hidden] { display: none; }
+      .overlay h2 { margin: 0; font-size: 24px; }
+      .overlay p { margin: 0; color: #a1acbf; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hud">
+        <div class="scores">
+          <span>Score<strong id="scoreVal">0</strong></span>
+          <span>Best<strong id="bestVal">0</strong></span>
+        </div>
+        <div class="actions">
+          <button type="button" id="undoBtn">Undo</button>
+          <button type="button" class="primary" id="newBtn">New Game</button>
+        </div>
+      </div>
+
+      <div class="board" id="board">
+        <div class="overlay" id="overlay" hidden>
+          <h2 id="endTitle">No Moves Left</h2>
+          <p id="endDesc">Final score: 0</p>
+          <button type="button" class="primary" id="retryBtn">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const boardEl = document.getElementById('board');
+      const scoreEl = document.getElementById('scoreVal');
+      const bestEl = document.getElementById('bestVal');
+      const undoBtn = document.getElementById('undoBtn');
+      const newBtn = document.getElementById('newBtn');
+      const overlay = document.getElementById('overlay');
+      const endTitle = document.getElementById('endTitle');
+      const endDesc = document.getElementById('endDesc');
+      const retryBtn = document.getElementById('retryBtn');
+
+      const BEST_KEY = 'pocket_arcade_2048_best';
+      let best = Number(localStorage.getItem(BEST_KEY) || 0);
+      bestEl.textContent = best;
+
+      const TILE_STYLE = {
+        0: ['#1b2436', 'transparent'],
+        2: ['#e2e8f0', '#0f172a'],
+        4: ['#fde68a', '#0f172a'],
+        8: ['#fbbf24', '#0f172a'],
+        16: ['#f59e0b', '#0f172a'],
+        32: ['#ea580c', '#ffffff'],
+        64: ['#dc2626', '#ffffff'],
+        128: ['#0d9488', '#ffffff'],
+        256: ['#0284c7', '#ffffff'],
+        512: ['#2563eb', '#ffffff'],
+        1024: ['#4f46e5', '#ffffff'],
+        2048: ['#10b981', '#0b0f17']
+      };
+
+      let grid = [];
+      let score = 0;
+      let prevState = null;
+
+      function initGame() {
+        grid = Array.from({ length: 4 }, () => [0, 0, 0, 0]);
+        score = 0;
+        prevState = null;
+        overlay.hidden = true;
+        addRandomTile();
+        addRandomTile();
+        render();
+      }
+
+      function addRandomTile() {
+        const empty = [];
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (grid[r][c] === 0) empty.push([r, c]);
+          }
+        }
+        if (!empty.length) return;
+        const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+        grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+      }
+
+      function render() {
+        const cells = Array.from(boardEl.querySelectorAll('.cell'));
+        if (cells.length !== 16) {
+          cells.forEach((el) => el.remove());
+          for (let i = 0; i < 16; i++) {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            boardEl.insertBefore(div, overlay);
+          }
+        }
+
+        const updatedCells = boardEl.querySelectorAll('.cell');
+        let idx = 0;
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            const val = grid[r][c];
+            const cell = updatedCells[idx++];
+            const [bg, fg] = TILE_STYLE[val] || ['#10b981', '#0b0f17'];
+            cell.style.backgroundColor = bg;
+            cell.style.color = fg;
+            cell.textContent = val === 0 ? '' : String(val);
+          }
+        }
+
+        scoreEl.textContent = String(score);
+        if (score > best) {
+          best = score;
+          localStorage.setItem(BEST_KEY, String(best));
+          bestEl.textContent = String(best);
+        }
+      }
+
+      function slideLine(line) {
+        const filtered = line.filter((v) => v !== 0);
+        const result = [];
+        let gained = 0;
+        for (let i = 0; i < filtered.length; i++) {
+          if (i + 1 < filtered.length && filtered[i] === filtered[i + 1]) {
+            const merged = filtered[i] * 2;
+            result.push(merged);
+            gained += merged;
+            i++;
+          } else {
+            result.push(filtered[i]);
+          }
+        }
+        while (result.length < 4) result.push(0);
+        return { result, gained };
+      }
+
+      function move(dir) {
+        const snapshot = grid.map((row) => [...row]);
+        const prevScore = score;
+        let moved = false;
+
+        for (let i = 0; i < 4; i++) {
+          let line;
+          if (dir === 'left') line = [...grid[i]];
+          else if (dir === 'right') line = [...grid[i]].reverse();
+          else if (dir === 'up') line = [grid[0][i], grid[1][i], grid[2][i], grid[3][i]];
+          else line = [grid[3][i], grid[2][i], grid[1][i], grid[0][i]];
+
+          const { result, gained } = slideLine(line);
+          score += gained;
+
+          const oriented = (dir === 'right' || dir === 'down') ? [...result].reverse() : result;
+          for (let j = 0; j < 4; j++) {
+            if (dir === 'left' || dir === 'right') {
+              if (grid[i][j] !== oriented[j]) moved = true;
+              grid[i][j] = oriented[j];
+            } else {
+              if (grid[j][i] !== oriented[j]) moved = true;
+              grid[j][i] = oriented[j];
+            }
+          }
+        }
+
+        if (moved) {
+          prevState = { grid: snapshot, score: prevScore };
+          addRandomTile();
+          render();
+          if (!hasMoves()) {
+            endTitle.textContent = 'No Moves Left';
+            endDesc.textContent = `Final score: ${score}`;
+            overlay.hidden = false;
+          }
+        }
+      }
+
+      function hasMoves() {
+        for (let r = 0; r < 4; r++) {
+          for (let c = 0; c < 4; c++) {
+            if (grid[r][c] === 0) return true;
+            if (c < 3 && grid[r][c] === grid[r][c + 1]) return true;
+            if (r < 3 && grid[r][c] === grid[r + 1][c]) return true;
+          }
+        }
+        return false;
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') move('left');
+        else if (e.code === 'ArrowRight' || e.code === 'KeyD') move('right');
+        else if (e.code === 'ArrowUp' || e.code === 'KeyW') move('up');
+        else if (e.code === 'ArrowDown' || e.code === 'KeyS') move('down');
+      });
+
+      let touchStart = null;
+      boardEl.addEventListener('touchstart', (e) => {
+        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      boardEl.addEventListener('touchend', (e) => {
+        if (!touchStart) return;
+        const dx = e.changedTouches[0].clientX - touchStart.x;
+        const dy = e.changedTouches[0].clientY - touchStart.y;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 20) {
+          if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
+          else move(dy > 0 ? 'down' : 'up');
+        }
+        touchStart = null;
+      }, { passive: true });
+
+      undoBtn.addEventListener('click', () => {
+        if (!prevState) return;
+        grid = prevState.grid;
+        score = prevState.score;
+        prevState = null;
+        overlay.hidden = true;
+        render();
+      });
+
+      newBtn.addEventListener('click', initGame);
+      retryBtn.addEventListener('click', initGame);
+
+      initGame();
+    </script>
+  </body>
+</html>

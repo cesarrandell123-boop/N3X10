@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Hopper</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f17;
+        color: #f3f5f9;
+        font-family: system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        user-select: none;
+      }
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        gap: 12px;
+      }
+      .hud {
+        width: 100%;
+        max-width: 820px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-variant-numeric: tabular-nums;
+      }
+      .stats {
+        display: flex;
+        gap: 20px;
+        font-size: 14px;
+        color: #a1acbf;
+      }
+      .stats strong { color: #f3f5f9; font-size: 16px; margin-left: 6px; }
+      .controls-row { display: flex; gap: 8px; }
+      button {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.14);
+        background: #131a27;
+        color: #f3f5f9;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #f59e0b;
+        color: #0b0f17;
+        border-color: #f59e0b;
+      }
+      .stage {
+        position: relative;
+        width: 100%;
+        max-width: 820px;
+        aspect-ratio: 16 / 9;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: #111827;
+      }
+      canvas { width: 100%; height: 100%; display: block; }
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: rgba(11, 15, 23, 0.78);
+        text-align: center;
+        padding: 24px;
+        gap: 12px;
+      }
+      .overlay[hidden] { display: none; }
+      .overlay h1 { margin: 0; font-size: 28px; }
+      .overlay p { margin: 0; color: #a1acbf; font-size: 14px; max-width: 38ch; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hud">
+        <div class="stats">
+          <span>Score<strong id="scoreVal">0</strong></span>
+          <span>Best<strong id="bestVal">0</strong></span>
+          <span>Speed<strong id="speedVal">1.0x</strong></span>
+        </div>
+        <div class="controls-row">
+          <button type="button" id="muteBtn">Sound On</button>
+          <button type="button" id="pauseBtn">Pause</button>
+        </div>
+      </div>
+
+      <div class="stage">
+        <canvas id="canvas" width="820" height="460"></canvas>
+        <div class="overlay" id="menuOverlay">
+          <h1 id="overlayTitle">Neon Hopper</h1>
+          <p id="overlayDesc">Press Space, Up Arrow, or Click/Tap to jump. Press again mid-air for a double jump.</p>
+          <button type="button" class="primary" id="startBtn">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const scoreEl = document.getElementById('scoreVal');
+      const bestEl = document.getElementById('bestVal');
+      const speedEl = document.getElementById('speedVal');
+      const menuOverlay = document.getElementById('menuOverlay');
+      const overlayTitle = document.getElementById('overlayTitle');
+      const overlayDesc = document.getElementById('overlayDesc');
+      const startBtn = document.getElementById('startBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const muteBtn = document.getElementById('muteBtn');
+
+      const BEST_KEY = 'pocket_arcade_hopper_best';
+      let best = Number(localStorage.getItem(BEST_KEY) || 0);
+      bestEl.textContent = best;
+
+      let state = 'TITLE';
+      let muted = false;
+      let audioCtx = null;
+      let lastTime = 0;
+
+      const GROUND_Y = 376;
+      const player = { x: 110, y: GROUND_Y - 40, w: 28, h: 40, vy: 0, jumps: 0 };
+      let obstacles = [];
+      let stars = Array.from({ length: 32 }, (_, i) => ({
+        x: (i * 89) % 820,
+        y: 35 + ((i * 53) % 210),
+        r: (i % 2) + 1
+      }));
+      let score = 0;
+      let speed = 320;
+      let spawnTimer = 0;
+
+      function beep(freq, dur) {
+        if (muted) return;
+        try {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + dur);
+        } catch {}
+      }
+
+      function resetGame() {
+        player.y = GROUND_Y - player.h;
+        player.vy = 0;
+        player.jumps = 0;
+        obstacles = [];
+        score = 0;
+        speed = 330;
+        spawnTimer = 0.9;
+        scoreEl.textContent = '0';
+        speedEl.textContent = '1.0x';
+      }
+
+      function startGame() {
+        resetGame();
+        state = 'PLAYING';
+        menuOverlay.hidden = true;
+        pauseBtn.textContent = 'Pause';
+      }
+
+      function jump() {
+        if (state !== 'PLAYING') return;
+        if (player.jumps < 2) {
+          player.vy = player.jumps === 0 ? -590 : -510;
+          player.jumps += 1;
+          beep(player.jumps === 1 ? 420 : 580, 0.09);
+        }
+      }
+
+      function togglePause() {
+        if (state === 'PLAYING') {
+          state = 'PAUSED';
+          overlayTitle.textContent = 'Paused';
+          overlayDesc.textContent = 'Take a breather and resume when ready.';
+          startBtn.textContent = 'Resume';
+          menuOverlay.hidden = false;
+          pauseBtn.textContent = 'Resume';
+        } else if (state === 'PAUSED') {
+          state = 'PLAYING';
+          menuOverlay.hidden = true;
+          pauseBtn.textContent = 'Pause';
+          lastTime = performance.now();
+        }
+      }
+
+      function gameOver() {
+        state = 'GAME_OVER';
+        beep(150, 0.25);
+        const finalScore = Math.floor(score);
+        if (finalScore > best) {
+          best = finalScore;
+          localStorage.setItem(BEST_KEY, String(best));
+          bestEl.textContent = best;
+        }
+        overlayTitle.textContent = `Run Ended · ${finalScore} pts`;
+        overlayDesc.textContent = `Best distance: ${best} pts. Ready for another run?`;
+        startBtn.textContent = 'Play Again';
+        menuOverlay.hidden = false;
+      }
+
+      function update(dt) {
+        if (state !== 'PLAYING') return;
+
+        score += dt * 18;
+        speed = Math.min(720, 330 + score * 0.45);
+        scoreEl.textContent = String(Math.floor(score));
+        speedEl.textContent = `${(speed / 330).toFixed(1)}x`;
+
+        player.vy += 1650 * dt;
+        player.y += player.vy * dt;
+        if (player.y >= GROUND_Y - player.h) {
+          player.y = GROUND_Y - player.h;
+          player.vy = 0;
+          player.jumps = 0;
+        }
+
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          const tall = Math.random() > 0.45;
+          const h = tall ? 66 + Math.random() * 24 : 36 + Math.random() * 14;
+          const w = tall ? 24 : 34;
+          obstacles.push({ x: 850, y: GROUND_Y - h, w, h });
+          spawnTimer = Math.max(0.65, 1.45 - (speed - 330) / 700) + Math.random() * 0.45;
+        }
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+          const ob = obstacles[i];
+          ob.x -= speed * dt;
+          if (ob.x + ob.w < -20) {
+            obstacles.splice(i, 1);
+            continue;
+          }
+          const pad = 4;
+          if (
+            player.x + pad < ob.x + ob.w &&
+            player.x + player.w - pad > ob.x &&
+            player.y + pad < ob.y + ob.h &&
+            player.y + player.h - pad > ob.y
+          ) {
+            gameOver();
+            return;
+          }
+        }
+
+        stars.forEach((s) => {
+          s.x -= speed * 0.08 * dt;
+          if (s.x < 0) s.x = 820;
+        });
+      }
+
+      function draw() {
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(0.7, '#271a22');
+        grad.addColorStop(1, '#1b1414');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.28)';
+        stars.forEach((s) => ctx.fillRect(s.x, s.y, s.r, s.r));
+
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+        ctx.beginPath();
+        ctx.arc(620, GROUND_Y - 12, 90, Math.PI, 0);
+        ctx.fill();
+
+        ctx.fillStyle = '#090d14';
+        ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(0, GROUND_Y, canvas.width, 2);
+
+        ctx.fillStyle = '#1f2937';
+        obstacles.forEach((ob) => {
+          ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(ob.x, ob.y, ob.w, 3);
+          ctx.fillStyle = '#1f2937';
+        });
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.beginPath();
+        ctx.roundRect(player.x, player.y, player.w, player.h, 6);
+        ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(player.x + 16, player.y + 8, 8, 5);
+      }
+
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000 || 0);
+        lastTime = now;
+        update(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      startBtn.addEventListener('click', () => {
+        if (state === 'PAUSED') togglePause();
+        else startGame();
+      });
+      pauseBtn.addEventListener('click', togglePause);
+      muteBtn.addEventListener('click', () => {
+        muted = !muted;
+        muteBtn.textContent = muted ? 'Sound Off' : 'Sound On';
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+          e.preventDefault();
+          if (state === 'TITLE' || state === 'GAME_OVER') startGame();
+          else jump();
+        } else if (e.code === 'KeyP') {
+          togglePause();
+        }
+      });
+
+      canvas.addEventListener('pointerdown', () => {
+        if (state === 'PLAYING') jump();
+      });
+
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>

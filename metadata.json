@@ -1,0 +1,6 @@
+{
+  "name": "Pocket Arcade",
+  "description": "An unblocked HTML5 game catalog storing playable games as iframes in JSON.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
